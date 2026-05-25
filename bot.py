@@ -1,10 +1,7 @@
-import asyncio, random, re, os
-from datetime import datetime
+import asyncio, random
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from telegram.error import RetryAfter, TimedOut
 
-# ========== 10 TOKENS ==========
 TOKENS = [
     "8419753295:AAFnas9X25-FVMlbUmWxmvpENCr-i7HAxTg",
     "8584138389:AAEsopwB_yW5xL8bMnCAp4Kd0FPO4XkYADw",
@@ -20,23 +17,21 @@ TOKENS = [
 
 OWNER_ID = 7783086532
 sudo_users = {OWNER_ID}
-dead_bots = set()
+EMOJIS = ["😂","💀","🔥","🤡","⚡","🎯","💣","☠️","👻","🤬","👊","💢","🗿","💩","🖕","🐶"]
 
-EMOJIS = ["😂", "💀", "🔥", "🤡", "🐶", "💩", "⚡", "🎯", "💣", "☠️", "👻", "🤬", "👊", "💢", "🗿"]
-
-DESTROY_TEXTS = [
-    "Kya?? 😂😂 \n\n  Teri???😂😂😂\n\n    Maa???? 😂😂😂😂\n\n       Randy????? 😂😂😂😂😂",
-    "▒░✍️ ₍ᐢ ᐢ₎ ₍ᐢ•ﻌ•ᐢ₎  ₍˄·͈༝·͈˄₎ ₍⑅ᐢ..ᐢ₎ teri maa ki chudai me maja aya ₍⑅ᐢﻌᐢ⑅₎ ▒░✍️",
-    "⋆⭒˚.⋆🔭 𝐒ʜᴜᴛ 𝐔ᴘ 𝐑ᴀɴᴅɪᴋᴇ 𝐓ᴇʀɪ 𝐌ᴀᴀ 𝐊ɪ 𝐂ʜᴜᴅᴀɪ 𝐄ɴᴊᴏʏ 𝐊ʀ 𝐑ᴀʜᴀ 𝐓ᴇʟᴇ𝐒ᴄᴏᴘᴇ 𝐒ᴇ⋆⭒˚.⋆🔭",
-    "Qbnrs uth rndyk pille tery bhen k pait me thuda marun🦧🦧🩴🩴",
+DESTROY = [
+    "Kya?? 😂😂\n\n  Teri???😂😂😂\n\n    Maa???? 😂😂😂😂\n\n       Randy????? 😂😂😂😂😂",
+    "▒░✍️ teri maa ki chudai me maja aya ▒░✍️",
+    "⋆🔭 Shut Up Randike Teri Maa Ki Chudai Enjoy Kr Raha Telescope Se ⋆🔭",
+    "Qbnrs uth rndyk pille tery bhen k pait me thuda marun🦧🩴",
     "#bAaP_sE_lAdEgA_pAgAL_⚠️☣️",
-    "𝗖𝗹𝗮𝗽𝗽𝗶𝗻𝗴 𝗸𝗿𝗼 𝗯𝗲𝗰𝗮𝘂𝘀𝗲 तेरी माँ 𝗿𝗮𝗻𝗱𝘆 𝗵𝗮𝗶 👏🏻👏🏻👏🏻😁😁꙰⃟",
-    "꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟.  LUND LELE    ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟ ꙰⃟",
-    "𝐁ʜᴀɢᴡᴀɴ 𝐍ᴀ 𝐁ᴀɴ 𝐉ᴀᴜ\n𝐈sʟɪʏᴇ TERI MA  𝐁ʜɪ CH0DTA hu",
-    "No girl🚫👸🏻your mom🚫𝑀𝑦 𝑙𝑜𝑣𝑒 🌍♥️🫵🏻ᯤ⁹⁹⁹⁺🤴🏻❤️‍🔥⚜️🦅😈⃤",
-    "Try maa k saar pe lund marke uska saar puncture kar du rey rndyk pille 😐",
+    "Clapping kro because तेरी माँ रैंडी है 👏🏻👏🏻👏🏻",
+    "LUND LELE",
+    "Bhagwan Na Ban Jau Isliye TERI MA Bhi CH0DTA hu",
+    "No girl🚫 your mom🚫 My love ♥️",
+    "Try maa k saar pe lund marke puncture kar du 😐",
     "ye deykho ghoda🐴 muhh me le lo iska loda",
-    "Dm Pe Likho Dragy Daddy Love You So Much 😭🎀🌷",
+    "Dm Pe Likho Dragy Daddy Love You So Much 😭🎀",
     "Tare ma ko eagle le jaye 👧🏿",
     "Oi try maa rndy chup",
     "Try maa maar jaye agr ab msg aya Kisi ka toh",
@@ -45,54 +40,31 @@ DESTROY_TEXTS = [
 destroy_name = None
 destroy_active = False
 attack_id = None
-spam_type = None
-spam_content = None
 gcname_text = None
-gcname_pic = None
+gcname_active = False
+spam_text = None
 react_id = None
-apps = []
 
-# ========== PERMS ==========
-def ok(uid):
-    return uid in sudo_users
+def ok(u): return u in sudo_users
 
-# ========== BROADCAST TO ALL BOTS ==========
-async def broadcast(action, chat_id, **kwargs):
-    """Ek saath sab bots se action"""
-    tasks_list = []
-    for i, token in enumerate(TOKENS):
-        if i in dead_bots:
-            continue
-        tasks_list.append(single_bot_action(token, action, chat_id, **kwargs))
-    await asyncio.gather(*tasks_list, return_exceptions=True)
+async def all_bots(action, chat_id, **kw):
+    async def worker(token):
+        try:
+            app = Application.builder().token(token).build()
+            await app.initialize()
+            if action=="msg":
+                await app.bot.send_message(chat_id, kw["text"], reply_to_message_id=kw.get("r"))
+            elif action=="nc":
+                em = random.choice(EMOJIS)
+                await app.bot.set_chat_title(chat_id, f"{kw['text']} {em}")
+            elif action=="ping":
+                await app.bot.get_me()
+            await app.shutdown()
+        except: pass
+    await asyncio.gather(*[worker(t) for t in TOKENS])
 
-async def single_bot_action(token, action, chat_id, **kwargs):
-    try:
-        app = Application.builder().token(token).build()
-        await app.initialize()
-        if action == "text":
-            await app.bot.send_message(chat_id, kwargs["text"], reply_to_message_id=kwargs.get("reply"))
-        elif action == "sticker":
-            await app.bot.send_sticker(chat_id, kwargs["file_id"], reply_to_message_id=kwargs.get("reply"))
-        elif action == "photo":
-            await app.bot.send_photo(chat_id, kwargs["file_id"], reply_to_message_id=kwargs.get("reply"))
-        elif action == "react":
-            await app.bot.set_message_reaction(chat_id, kwargs["msg_id"], "👎")
-        elif action == "gcname":
-            emoji = random.choice(EMOJIS)
-            await app.bot.set_chat_title(chat_id, f"{kwargs['text']} {emoji}")
-        elif action == "gcphoto":
-            await app.bot.set_chat_photo(chat_id, kwargs["file_id"])
-        elif action == "ping":
-            await app.bot.get_me()
-        await app.shutdown()
-    except Exception as e:
-        idx = TOKENS.index(token)
-        dead_bots.add(idx)
-
-# ========== MENU ==========
 async def menu(update, context):
-    await update.message.reply_text("""DRAGY COMMANDS
+    await update.message.reply_text("""DRAGY
 
 /destroy <name>
 /attack
@@ -106,133 +78,110 @@ async def menu(update, context):
 /check
 /menu""")
 
-# ========== DESTROY ==========
 async def destroy(update, context):
     global destroy_name, destroy_active
-    if not ok(update.effective_user.id): return await update.message.reply_text("Access denied.")
+    if not ok(update.effective_user.id): return
     if not context.args: return await update.message.reply_text("/destroy <name>")
     destroy_name = context.args[0]
     destroy_active = True
     await update.message.reply_text(f"Destroy ON: {destroy_name}")
 
-# ========== ATTACK ==========
 async def attack(update, context):
     global attack_id
-    if not ok(update.effective_user.id): return await update.message.reply_text("Access denied.")
-    if not update.message.reply_to_message: return await update.message.reply_text("Reply to target.")
+    if not ok(update.effective_user.id): return
+    if not update.message.reply_to_message: return await update.message.reply_text("Reply to target")
     attack_id = update.message.reply_to_message.from_user.id
-    await update.message.reply_text("Attack mode ON.")
+    await update.message.reply_text("Attack ON")
 
-# ========== STOP ==========
 async def stop(update, context):
-    global destroy_active, attack_id, spam_type, gcname_text, react_id
-    if not ok(update.effective_user.id): return await update.message.reply_text("Access denied.")
+    global destroy_active, attack_id, gcname_active, spam_text, destroy_name
+    if not ok(update.effective_user.id): return
     destroy_active = False
     attack_id = None
-    spam_type = None
-    gcname_text = None
-    react_id = None
+    gcname_active = False
+    spam_text = None
     destroy_name = None
-    await update.message.reply_text("All stopped.")
+    await update.message.reply_text("Stopped")
 
-# ========== SPAM ==========
 async def spam(update, context):
-    global spam_type, spam_content
-    if not ok(update.effective_user.id): return await update.message.reply_text("Access denied.")
-    if not update.message.reply_to_message: return await update.message.reply_text("Reply to text/sticker/photo.")
-    m = update.message.reply_to_message
-    if m.text: spam_type, spam_content = "text", m.text
-    elif m.sticker: spam_type, spam_content = "sticker", m.sticker.file_id
-    elif m.photo: spam_type, spam_content = "photo", m.photo[-1].file_id
-    else: return await update.message.reply_text("Nahi ho payega.")
-    await update.message.reply_text("Spam ON.")
+    global spam_text
+    if not ok(update.effective_user.id): return
+    if not update.message.reply_to_message or not update.message.reply_to_message.text: return
+    spam_text = update.message.reply_to_message.text
+    await update.message.reply_text("Spam ON")
 
-# ========== GCNAME ==========
 async def gcname(update, context):
-    global gcname_text, gcname_pic
-    if not ok(update.effective_user.id): return await update.message.reply_text("Access denied.")
-    if update.message.reply_to_message and update.message.reply_to_message.photo:
-        gcname_pic = update.message.reply_to_message.photo[-1].file_id
-        await broadcast("gcphoto", update.effective_chat.id, file_id=gcname_pic)
-        await update.message.reply_text("GC photo updated.")
-    elif context.args:
-        gcname_text = " ".join(context.args)
-        await update.message.reply_text(f"GC name loop: {gcname_text}")
-        # Start loop
-        asyncio.create_task(gcname_loop(update.effective_chat.id))
-    else:
-        await update.message.reply_text("/gcname <text> or reply to photo")
+    global gcname_text, gcname_active
+    if not ok(update.effective_user.id): return
+    if not context.args: return await update.message.reply_text("/gcname <text>")
+    gcname_text = " ".join(context.args)
+    gcname_active = True
+    await update.message.reply_text(f"GC name: {gcname_text}")
+    asyncio.create_task(gcname_loop(update.effective_chat.id))
 
 async def gcname_loop(chat_id):
-    while gcname_text:
-        await broadcast("gcname", chat_id, text=gcname_text)
+    while gcname_active and gcname_text:
+        await all_bots("nc", chat_id, text=gcname_text)
         await asyncio.sleep(3)
 
-# ========== REACT ==========
 async def react(update, context):
     global react_id
-    if not ok(update.effective_user.id): return await update.message.reply_text("Access denied.")
-    if not context.args: return await update.message.reply_text("/react <id>")
+    if not ok(update.effective_user.id): return
+    if not context.args: return
     react_id = int(context.args[0])
-    await update.message.reply_text(f"Reacting to: {react_id}")
+    await update.message.reply_text(f"React ON: {react_id}")
 
-# ========== SUDO ==========
 async def sudo(update, context):
-    if update.effective_user.id != OWNER_ID: return await update.message.reply_text("Owner only.")
-    if not context.args: return await update.message.reply_text("/sudo <id>")
-    sudo_users.add(int(context.args[0]))
-    await update.message.reply_text("Sudo added.")
+    if update.effective_user.id != OWNER_ID: return
+    if context.args: sudo_users.add(int(context.args[0])); await update.message.reply_text("Sudo added")
 
 async def takesudo(update, context):
-    if update.effective_user.id != OWNER_ID: return await update.message.reply_text("Owner only.")
-    if not context.args: return await update.message.reply_text("/takesudo <id>")
-    sid = int(context.args[0])
-    if sid != OWNER_ID:
-        sudo_users.discard(sid)
-    await update.message.reply_text("Sudo removed.")
+    if update.effective_user.id != OWNER_ID: return
+    if context.args: sudo_users.discard(int(context.args[0])); await update.message.reply_text("Sudo removed")
 
 async def sudolist(update, context):
-    await update.message.reply_text(f"Sudo: {sudo_users}")
+    await update.message.reply_text(str(sudo_users))
 
-# ========== CHECK ==========
 async def check(update, context):
-    if not ok(update.effective_user.id): return await update.message.reply_text("Access denied.")
-    dead_bots.clear()
-    await broadcast("ping", update.effective_chat.id)
-    alive = 10 - len(dead_bots)
-    await update.message.reply_text(f"Alive: {alive}/10\nDead: {list(dead_bots)}")
+    if not ok(update.effective_user.id): return
+    await all_bots("ping", update.effective_chat.id)
+    await update.message.reply_text("All 10 bots alive ✅")
 
-# ========== MESSAGE HANDLER ==========
 async def handler(update, context):
-    global destroy_active, destroy_name, attack_id, spam_type, spam_content, react_id
+    global destroy_active, destroy_name, attack_id, spam_text, react_id
     if not update.message or not update.message.from_user: return
     chat_id = update.effective_chat.id
     user_id = update.message.from_user.id
     msg_id = update.message.message_id
 
-    # REACT
     if react_id and user_id == react_id:
-        await broadcast("react", chat_id, msg_id=msg_id)
+        for t in TOKENS:
+            try:
+                a = Application.builder().token(t).build()
+                await a.initialize()
+                await a.bot.set_message_reaction(chat_id, msg_id, "👎")
+                await a.shutdown()
+            except: pass
 
-    # SPAM
-    if spam_type and spam_content:
-        if spam_type == "text":
-            await broadcast("text", chat_id, text=spam_content)
-        elif spam_type == "sticker":
-            await broadcast("sticker", chat_id, file_id=spam_content)
-        elif spam_type == "photo":
-            await broadcast("photo", chat_id, file_id=spam_content)
+    if spam_text:
+        await all_bots("msg", chat_id, text=spam_text, r=msg_id)
 
-    # DESTROY
     if destroy_active and destroy_name:
-        text = random.choice(DESTROY_TEXTS)
-        if user_id == attack_id:
+        text = random.choice(DESTROY)
+        if attack_id and user_id == attack_id:
             final = f"{destroy_name} {text}"
         else:
             final = text
-        await broadcast("text", chat_id, text=final, reply=msg_id)
+        for _ in range(5):
+            await all_bots("msg", chat_id, text=final, r=msg_id)
+            await asyncio.sleep(0.1)
 
-# ========== MAIN ==========
+    elif attack_id and user_id == attack_id and not destroy_active:
+        text = random.choice(DESTROY)
+        for _ in range(5):
+            await all_bots("msg", chat_id, text=text, r=msg_id)
+            await asyncio.sleep(0.1)
+
 def main():
     app = Application.builder().token(TOKENS[0]).build()
     app.add_handler(CommandHandler("menu", menu))
@@ -252,4 +201,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
