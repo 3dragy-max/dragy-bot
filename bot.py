@@ -1,4 +1,4 @@
-import asyncio, random
+import asyncio, random, time
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -24,13 +24,22 @@ EMOJI_SETS = [
     "🙇🙋💁🙆🙅🤷🤦🙍🏃🙎🛌🧏🛀💆🧖💇🧍🤸🧎🧑‍🦼🧑‍🦽🧑‍🦯🧑‍🦯🚶🚶🏃⛹️🤼‍♂️🤾🤼🚴🏋️🧗🚵🤼‍♀️🏌️🏇🤹🤺🏌️🏂🪂",
 ]
 
-DESTROY = [
+DESTROY_TEXTS = [
     "Kya?? 😂😂\n\n  Teri???😂😂😂\n\n    Maa???? 😂😂😂😂\n\n       Randy????? 😂😂😂😂😂",
     "▒░✍️ teri maa ki chudai me maja aya ▒░✍️",
     "Qbnrs uth rndyk pille tery bhen k pait me thuda marun🦧🩴",
     "LUND LELE",
     "Bhagwan Na Ban Jau Isliye TERI MA Bhi CH0DTA hu",
     "Try maa k saar pe lund marke puncture kar du 😐",
+    "𝐒ʜᴜᴛ 𝐔ᴘ 𝐑ᴀɴᴅɪᴋᴇ 𝐓ᴇʀɪ 𝐌ᴀᴀ 𝐊ɪ 𝐂ʜᴜᴅᴀɪ 𝐄ɴᴊᴏʏ 𝐊ʀ",
+    "तेरी माँ रैंडी है 👏🏻👏🏻👏🏻",
+    "No girl🚫 your mom🚫 My love ♥️",
+    "Chup rndyke bche",
+    "Try maa rndy chup",
+    "tera baap Dragy hai 😂",
+    "Gc left le rndyk pille",
+    "Stay strong 😹😹💪",
+    "Na na Rona ni h",
 ]
 
 REACT_EMOJI = "🤣"
@@ -43,21 +52,23 @@ gcname_active = False
 spam_text = None
 spam_active = False
 react_id = None
+start_time = time.time()
 
 def ok(u): return u in sudo_users
 
+# ⚡ ULTRA FAST ALL BOTS
 async def all_bots(chat_id, text, reply=None):
-    async def w(t):
+    async def fire(token):
         try:
-            a = Application.builder().token(t).build()
+            a = Application.builder().token(token).build()
             await a.initialize()
             await a.bot.send_message(chat_id, text, reply_to_message_id=reply)
             await a.shutdown()
         except: pass
-    await asyncio.gather(*[w(t) for t in TOKENS])
+    await asyncio.gather(*[fire(t) for t in TOKENS])
 
 async def menu(update, context):
-    await update.message.reply_text("""DRAGY
+    await update.message.reply_text("""⚔️ DRAGY ⚔️
 /destroy <name>
 /attack
 /stop
@@ -75,27 +86,27 @@ async def destroy(update, context):
     destroy_name = context.args[0]
     destroy_active = True
     asyncio.create_task(destroy_loop(update.effective_chat.id))
-    await update.message.reply_text(f"Destroy NON-STOP: {destroy_name}")
+    await update.message.reply_text(f"⚔️ Destroy: {destroy_name}")
 
 async def destroy_loop(chat_id):
     while destroy_active and destroy_name:
-        text = random.choice(DESTROY)
+        text = random.choice(DESTROY_TEXTS)
         final = f"{destroy_name} {text}"
         await all_bots(chat_id, final)
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.15)
 
 async def attack(update, context):
     global attack_id
     if not ok(update.effective_user.id): return
     if not update.message.reply_to_message: return
     attack_id = update.message.reply_to_message.from_user.id
-    await update.message.reply_text("Attack ON")
+    await update.message.reply_text("🎯 Attack ON")
 
 async def stop(update, context):
     global destroy_active, attack_id, gcname_active, spam_active
     if not ok(update.effective_user.id): return
-    destroy_active = False; attack_id = None; gcname_active = False; spam_active = False
-    await update.message.reply_text("All stopped")
+    destroy_active = attack_id = gcname_active = spam_active = False
+    await update.message.reply_text("🛑 All stopped")
 
 async def spam(update, context):
     global spam_text, spam_active
@@ -104,12 +115,12 @@ async def spam(update, context):
     spam_text = update.message.reply_to_message.text
     spam_active = True
     asyncio.create_task(spam_loop(update.effective_chat.id))
-    await update.message.reply_text("Spam NON-STOP")
+    await update.message.reply_text("💣 Spam NON-STOP")
 
 async def spam_loop(chat_id):
     while spam_active and spam_text:
         await all_bots(chat_id, spam_text)
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.1)
 
 async def gcname(update, context):
     global gcname_text, gcname_active
@@ -118,7 +129,7 @@ async def gcname(update, context):
     gcname_text = " ".join(context.args)
     gcname_active = True
     asyncio.create_task(gcname_loop(update.effective_chat.id))
-    await update.message.reply_text(f"GC name: {gcname_text}")
+    await update.message.reply_text(f"🔄 GC: {gcname_text}")
 
 async def gcname_loop(chat_id):
     i = 0
@@ -136,22 +147,22 @@ async def gcname_loop(chat_id):
             tasks.append(nc())
         await asyncio.gather(*tasks)
         i += 1
-        await asyncio.sleep(2)
+        await asyncio.sleep(1.5)
 
 async def react(update, context):
     global react_id
     if not ok(update.effective_user.id): return
     if not context.args: return
     react_id = int(context.args[0])
-    await update.message.reply_text(f"React ON: {react_id}")
+    await update.message.reply_text(f"🤣 React: {react_id}")
 
 async def sudo(update, context):
     if update.effective_user.id != OWNER_ID: return
-    if context.args: sudo_users.add(int(context.args[0])); await update.message.reply_text("Sudo added")
+    if context.args: sudo_users.add(int(context.args[0])); await update.message.reply_text("✅ Sudo added")
 
 async def check(update, context):
-    await all_bots(update.effective_chat.id, "✅")
-    await update.message.reply_text("All 10 alive")
+    await all_bots(update.effective_chat.id, "⚡")
+    await update.message.reply_text("✅ All 10 alive")
 
 async def handler(update, context):
     global attack_id, react_id
@@ -170,7 +181,7 @@ async def handler(update, context):
             except: pass
 
     if attack_id and user_id == attack_id:
-        text = random.choice(DESTROY)
+        text = random.choice(DESTROY_TEXTS)
         await all_bots(chat_id, text, msg_id)
 
 def main():
